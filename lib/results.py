@@ -1,4 +1,5 @@
 from GRUModel import GRUModel
+from CNNModel import CNNModel
 from DeepBloom import DeepBloom
 from DeeperBloom import DeeperBloom
 import json
