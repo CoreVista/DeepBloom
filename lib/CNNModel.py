@@ -9,7 +9,7 @@ import numpy as np
 
 
 class CNNModel(Model):
-    def __init__(self, embeddings_path, embedding_dim, lr=0.001, maxlen=50, pca_embedding_dim=None, batch_size=1024, gru_size=16, hidden_size=None, second_gru_size=None, decay=0.0001, epochs=30, lstm=False, dense_only=False):
+    def __init__(self, embeddings_path, embedding_dim, lr=0.001, maxlen=50, pca_embedding_dim=None, batch_size=1024, gru_size=16, hidden_size=None, second_gru_size=None, decay=0.0001, epochs=30, lstm=False, dense_only=False, kernel_size=3):
         self.embeddings_path = embeddings_path
         self.embedding_dim = embedding_dim
         self.lr = lr
@@ -24,6 +24,7 @@ class CNNModel(Model):
         self.epochs = epochs
         self.lstm = lstm
         self.dense_only = dense_only
+        self.kernel_size = kernel_size
 
     def fit(self, text_X, text_y):
 
@@ -82,7 +83,7 @@ class CNNModel(Model):
             layers = [
             Embedding(num_chars + 1, self.embedding_dim if not self.pca_embedding_dim else self.pca_embedding_dim, input_length=self.maxlen,
                       weights=[embedding_matrix] if not self.pca_embedding_dim else [embedding_matrix_pca]),
-                Conv1D((self.maxlen, self.embedding_dim if not self.pca_embedding_dim else self.pca_embedding_dim), 3, padding='valid', activation='relu', strides=1),
+                Conv1D((self.maxlen, self.embedding_dim if not self.pca_embedding_dim else self.pca_embedding_dim), self.kernel_size, padding='valid', activation='relu', strides=1),
                 GlobalMaxPooling1D(),
                 Flatten(),
                 Dense(8),
