@@ -1,7 +1,7 @@
 from Model import Model
 from utils import *
 from keras.models import Sequential, load_model
-from keras.layers import Dense, Activation, Embedding, Flatten
+from keras.layers import Dense, Activation, Embedding, Flatten, Concatenate
 from keras.layers import LSTM, Input, GRU, Conv1D, GlobalMaxPooling1D
 from keras import optimizers
 from sklearn.decomposition import PCA
@@ -80,12 +80,21 @@ class CNNModel(Model):
         if not self.dense_only:
             layers = prelayers + postlayers
         else:
+            sub_model = list()
+            for kernel_size in self.kernel_size:
+                sub_layers = [
+                Embedding(num_chars + 1, self.embedding_dim if not self.pca_embedding_dim else self.pca_embedding_dim, input_length=self.maxlen,
+                          weights=[embedding_matrix] if not self.pca_embedding_dim else [embedding_matrix_pca]),
+                    Conv1D((self.maxlen, self.embedding_dim if not self.pca_embedding_dim else self.pca_embedding_dim), kernel_size, padding='valid', activation='tanh', strides=1),
+                    GlobalMaxPooling1D(),
+                    Flatten(),
+                ]
+                sub_model.append(Sequential(sub_layers))
+            merge = Concatenate(sub_model)
             layers = [
-            Embedding(num_chars + 1, self.embedding_dim if not self.pca_embedding_dim else self.pca_embedding_dim, input_length=self.maxlen,
-                      weights=[embedding_matrix] if not self.pca_embedding_dim else [embedding_matrix_pca]),
-                Conv1D((self.maxlen, self.embedding_dim if not self.pca_embedding_dim else self.pca_embedding_dim), self.kernel_size, padding='valid', activation='relu', strides=1),
-                GlobalMaxPooling1D(),
-                Flatten(),
+                merge,
+                Dense(self.embedding_dim if not self.pca_embedding_dim else self.pca_embedding_dim),
+                Activation('relu'),
                 Dense(8),
                 Activation('relu'),
                 Dense(4),
